@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Muse.AR — Augmented Virtual Gallery</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:    #f5f3ef;
+      --ink:   #1a1814;
+      --muted: #9a9690;
+      --line:  #e2dfd9;
+      --teal:  #1a9e94;
+      --teal-light: #e8f5f4;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      overflow-x: hidden;
+      font-weight: 300;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1.6rem 3.5rem;
+      background: rgba(245, 243, 239, 0.88);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.15rem; color: var(--ink); letter-spacing: 0.01em;
+    }
+    .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+    .nav-links a {
+      font-size: 0.78rem; font-weight: 400; letter-spacing: 0.06em;
+      color: var(--muted); text-decoration: none; transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--ink); }
+
+    /* HERO BUTTON */
+    .hero-btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      margin-top: 0.2rem;
+      font-size: 0.72rem; font-weight: 500; letter-spacing: 0.1em;
+      text-transform: uppercase; text-decoration: none;
+      color: var(--teal); border-bottom: 1px solid rgba(26,158,148,0.35);
+      padding-bottom: 0.15rem;
+      transition: gap 0.2s, border-color 0.2s;
+    }
+    .hero-btn:hover { gap: 0.8rem; border-color: var(--teal); }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: grid; grid-template-columns: 1fr 1fr;
+      align-items: end; padding: 9rem 3.5rem 5rem; gap: 5rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .hero-kicker {
+      font-size: 0.7rem; font-weight: 500; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--teal); margin-bottom: 2rem;
+    }
+    .hero-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(4rem, 8vw, 7.5rem);
+      line-height: 1; letter-spacing: -0.02em; color: var(--ink);
+    }
+    .hero-title em { font-style: italic; color: var(--teal); }
+    .hero-subtitle {
+      font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted); margin-top: 1.4rem; margin-bottom: 3rem;
+    }
+    .hero-right { align-self: end; }
+    .hero-thumbnail {
+      width: 100%; border-radius: 6px; overflow: hidden;
+      border: 1px solid var(--line);
+      margin-top: 2.2rem;
+      box-shadow: 0 4px 28px rgba(0,0,0,0.08);
+    }
+    .hero-thumbnail img {
+      width: 100%; height: auto; display: block;
+    }
+    .hero-desc {
+      font-size: 1.05rem; line-height: 1.8; color: #5a5752;
+      max-width: 400px; margin-bottom: 3rem;
+    }
+    .hero-meta { display: flex; flex-direction: column; gap: 0.9rem; }
+    .hero-meta-row {
+      display: flex; align-items: baseline; gap: 1.5rem;
+      padding-bottom: 0.9rem; border-bottom: 1px solid var(--line);
+    }
+    .hero-meta-row:last-child { border-bottom: none; }
+    .meta-label {
+      font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--muted); min-width: 80px;
+    }
+    .meta-val { font-size: 0.85rem; color: var(--ink); }
+
+    /* SECTIONS */
+    section { padding: 7rem 3.5rem; border-bottom: 1px solid var(--line); }
+    .s-num {
+      font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 4rem;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .s-num span { color: var(--line); }
+    .s-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2.2rem, 4vw, 3.8rem);
+      line-height: 1.08; letter-spacing: -0.02em;
+    }
+    .s-title em { font-style: italic; color: var(--teal); }
+    .s-body { font-size: 0.95rem; line-height: 1.8; color: #6e6b66; max-width: 520px; }
+
+    /* OVERVIEW */
+    .overview-layout {
+      display: grid; grid-template-columns: 5fr 7fr;
+      gap: 6rem; align-items: start; margin-top: 5rem;
+    }
+    .pull-quote {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.35rem; line-height: 1.55; font-style: italic;
+      border-left: 2px solid var(--teal); padding-left: 1.5rem; margin-bottom: 2.5rem;
+    }
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr; }
+    .stat {
+      padding: 2rem 1.5rem; border: 1px solid var(--line);
+      margin: -1px 0 0 -1px;
+    }
+    .stat-n {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2.8rem; line-height: 1; margin-bottom: 0.4rem;
+    }
+    .stat-n span { font-size: 1.6rem; color: var(--teal); }
+    .stat-l { font-size: 0.75rem; color: var(--muted); line-height: 1.5; }
+
+    /* PROCESS */
+    .process-list { margin-top: 4rem; }
+    .process-item {
+      display: grid; grid-template-columns: 60px 1fr 1fr;
+      gap: 2rem; align-items: baseline;
+      padding: 2rem 0; border-bottom: 1px solid var(--line);
+    }
+    .process-item:first-child { border-top: 1px solid var(--line); }
+    .p-num { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.1em; }
+    .p-name { font-family: 'DM Serif Display', serif; font-size: 1.15rem; }
+    .p-desc { font-size: 0.82rem; color: #7a7772; line-height: 1.6; }
+
+    /* FEATURES */
+    .features-layout {
+      display: grid; grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--line); margin-top: 4rem;
+    }
+    .feat {
+      padding: 2.5rem; border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line); transition: background 0.25s;
+    }
+    .feat:nth-child(even) { border-right: none; }
+    .feat:nth-last-child(-n+2) { border-bottom: none; }
+    .feat:hover { background: white; }
+    .feat-mark {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--teal-light); display: flex;
+      align-items: center; justify-content: center;
+      font-size: 0.85rem; margin-bottom: 1.5rem;
+    }
+    .feat-t { font-size: 0.95rem; font-weight: 500; margin-bottom: 0.5rem; }
+    .feat-d { font-size: 0.8rem; color: var(--muted); line-height: 1.65; }
+
+    /* DESIGN SYSTEM */
+    .ds-layout {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 6rem; margin-top: 5rem; align-items: start;
+    }
+    .ds-label {
+      font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 1.2rem;
+      padding-bottom: 0.7rem; border-bottom: 1px solid var(--line);
+    }
+    .ds-block { margin-bottom: 3rem; }
+    .type-display {
+      font-family: 'DM Serif Display', serif;
+      font-size: 5.5rem; line-height: 1; letter-spacing: -0.03em; margin-bottom: 0.3rem;
+    }
+    .type-note { font-size: 0.75rem; color: var(--muted); }
+    .palette { display: flex; gap: 0.4rem; padding-bottom: 2rem; }
+    .swatch { flex: 1; height: 44px; border-radius: 2px; position: relative; }
+    .swatch::after {
+      content: attr(data-hex); position: absolute; bottom: -1.4rem;
+      left: 0; right: 0; text-align: center;
+      font-size: 0.45rem; font-family: monospace; color: var(--muted);
+    }
+    .logo-formula { display: flex; align-items: center; gap: 1rem; font-family: 'DM Serif Display', serif; }
+    .lf-box { font-size: 1.4rem; padding: 0.5rem 0.8rem; border: 1px solid var(--line); border-radius: 4px; }
+    .lf-sym { font-size: 1.2rem; color: var(--muted); }
+    .lf-result { font-size: 1.4rem; color: var(--teal); font-style: italic; }
+    .fidelity-list { display: flex; flex-direction: column; gap: 1.2rem; }
+    .fid-row { display: flex; align-items: center; gap: 1.2rem; }
+    .fid-label { font-size: 0.75rem; color: var(--muted); min-width: 90px; }
+    .fid-track { flex: 1; height: 3px; background: var(--line); border-radius: 999px; overflow: hidden; }
+    .fid-fill { height: 100%; background: var(--teal); border-radius: 999px; }
+    .screen-row-item {
+      padding: 1rem 0; border-bottom: 1px solid var(--line);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .screen-row-item:last-child { border-bottom: none; }
+
+    /* TECHNICAL */
+    .tech-layout {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 6rem; margin-top: 4rem; align-items: start;
+    }
+    .tool-list { display: flex; flex-direction: column; }
+    .tool {
+      display: flex; align-items: baseline; gap: 1.5rem;
+      padding: 1.1rem 0; border-bottom: 1px solid var(--line);
+    }
+    .tool:first-child { border-top: 1px solid var(--line); }
+    .tool-n { font-size: 0.88rem; font-weight: 500; flex: 1; }
+    .tool-u { font-size: 0.75rem; color: var(--muted); }
+    .pipeline { display: flex; flex-direction: column; }
+    .pipe-step {
+      display: flex; gap: 1.5rem; align-items: flex-start;
+      padding: 1.4rem 0; border-bottom: 1px solid var(--line);
+    }
+    .pipe-step:first-child { border-top: 1px solid var(--line); }
+    .pipe-n { font-size: 0.65rem; color: var(--teal); font-weight: 500; min-width: 20px; margin-top: 2px; }
+    .pipe-t { font-size: 0.85rem; line-height: 1.55; color: #5a5752; }
+
+    /* OUTCOMES */
+    .outcomes-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--line); margin-top: 4rem;
+    }
+    .outcome {
+      padding: 2.5rem; border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+    .outcome:nth-child(even) { border-right: none; }
+    .outcome:nth-last-child(-n+2) { border-bottom: none; }
+    .oc-num {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2rem; color: var(--line); margin-bottom: 1rem;
+    }
+    .oc-t { font-size: 0.9rem; font-weight: 500; margin-bottom: 0.5rem; }
+    .oc-d { font-size: 0.8rem; color: var(--muted); line-height: 1.65; }
+
+    /* REFLECTION */
+    .reflection-layout { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4rem; margin-top: 4rem; }
+    .ref-label {
+      font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+      margin-bottom: 1.5rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--line);
+    }
+    .ref-label.future { color: var(--teal); }
+    .ref-label.limits { color: #c07060; }
+    .ref-label.conclude { color: var(--ink); }
+    .ref-list { display: flex; flex-direction: column; gap: 0.9rem; }
+    .ref-list li {
+      list-style: none; font-size: 0.82rem; color: #6e6b66;
+      line-height: 1.6; padding-left: 1rem; position: relative;
+    }
+    .ref-list li::before { content: '–'; position: absolute; left: 0; color: var(--muted); }
+
+    /* FOOTER */
+    footer {
+      padding: 3.5rem; display: flex;
+      justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1.5rem;
+    }
+    .footer-brand { font-family: 'DM Serif Display', serif; font-size: 1rem; }
+    .footer-sub { font-size: 0.72rem; color: var(--muted); margin-top: 0.2rem; }
+    .footer-copy { font-size: 0.7rem; color: var(--muted); }
+
+    /* REVEAL */
+    .reveal {
+      opacity: 0; transform: translateY(22px);
+      transition: opacity 0.75s cubic-bezier(.16,1,.3,1), transform 0.75s cubic-bezier(.16,1,.3,1);
+    }
+    .reveal.in { opacity: 1; transform: none; }
+
+    /* RESPONSIVE */
+    @media (max-width: 860px) {
+      nav { padding: 1.2rem 1.8rem; }
+      .nav-links { display: none; }
+      section { padding: 5rem 1.8rem; }
+      .hero { grid-template-columns: 1fr; padding: 8rem 1.8rem 4rem; gap: 3rem; }
+      .overview-layout, .ds-layout, .tech-layout, .reflection-layout { grid-template-columns: 1fr; gap: 3rem; }
+      .features-layout { grid-template-columns: 1fr; }
+      .feat { border-right: none !important; }
+      .feat:nth-last-child(-n+2) { border-bottom: 1px solid var(--line) !important; }
+      .feat:last-child { border-bottom: none !important; }
+      .outcomes-grid { grid-template-columns: 1fr; }
+      .outcome { border-right: none !important; }
+      .process-item { grid-template-columns: 40px 1fr; }
+      .p-desc { grid-column: 2; }
+      footer { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-logo">Muse.AR</div>
+    <ul class="nav-links">
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#process">Process</a></li>
+      <li><a href="#design">Design</a></li>
+      <li><a href="#technical">Technical</a></li>
+      <li><a href="#reflection">Reflection</a></li>
+    </ul>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-left">
+      <p class="hero-kicker reveal">MCD Graduation Project · 2024</p>
+      <h1 class="hero-title reveal">Muse<em>.</em><br/>AR</h1>
+      <p class="hero-subtitle reveal">Augmented Virtual Gallery</p>
+      <a class="hero-btn reveal" href="https://www.behance.net/gallery/222850545/MuseAR-Augmented-Virtual-Gallery?platform=direct" target="_blank" rel="noopener noreferrer">
+        View Full Project
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
+      </a>
+
+    </div>
+    <div class="hero-right reveal">
+      <p class="hero-desc">Transforming how art is experienced — bringing the gallery directly to users, enabling them to explore and interact with digital artworks seamlessly through Augmented Reality.</p>
+      <div class="hero-meta">
+        <div class="hero-meta-row">
+          <span class="meta-label">Role</span>
+          <span class="meta-val">UI/UX · 3D Space · AR Development</span>
+        </div>
+        <div class="hero-meta-row">
+          <span class="meta-label">Platform</span>
+          <span class="meta-val">Android Application</span>
+        </div>
+        <div class="hero-meta-row">
+          <span class="meta-label">Stack</span>
+          <span class="meta-val">Figma · Unity · Blender · ARCore · Android Studio</span>
+        </div>
+        <div class="hero-meta-row">
+          <span class="meta-label">Year</span>
+          <span class="meta-val">2024 — Dept. of MCD Graduation Project</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section id="overview">
+    <p class="s-num reveal">01 <span>———</span> Overview</p>
+    <div class="overview-layout">
+      <div><h2 class="s-title reveal">Why<br/><em>museAR?</em></h2></div>
+      <div class="reveal">
+        <p class="pull-quote">"Traditional degree shows and static online galleries fail to fully capture the depth, interactivity, and immersive experience of digital artworks."</p>
+        <p class="s-body" style="margin-bottom:3.5rem;">There is a growing need for an innovative platform that provides a more engaging and immersive presentation of student work — one that communicates context and intent behind each project, facilitating a deeper connection between audience and artwork.</p>
+        <div class="stats-row">
+          <div class="stat"><div class="stat-n">84<span>%</span></div><div class="stat-l">Envision AR as the ideal museum or gallery experience</div></div>
+          <div class="stat"><div class="stat-n">91<span>%</span></div><div class="stat-l">Believe an AR art showcase app would be helpful</div></div>
+          <div class="stat"><div class="stat-n">41<span>%</span></div><div class="stat-l">Very interested in showcasing art via AR exhibition</div></div>
+          <div class="stat"><div class="stat-n">34</div><div class="stat-l">Survey respondents — industry professionals, students, artists</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="process">
+    <p class="s-num reveal">02 <span>———</span> Design Process</p>
+    <h2 class="s-title reveal">From Research<br/>to <em>Reality</em></h2>
+    <div class="process-list reveal">
+      <div class="process-item">
+        <span class="p-num">01</span><span class="p-name">Research</span>
+        <span class="p-desc">Secondary research, user surveys (N=34), existing app analysis, immersive technology landscape study.</span>
+      </div>
+      <div class="process-item">
+        <span class="p-num">02</span><span class="p-name">Conceptualization</span>
+        <span class="p-desc">User personas, pain point analysis, SWOT framework, user flow mapping across all app states.</span>
+      </div>
+      <div class="process-item">
+        <span class="p-num">03</span><span class="p-name">Branding</span>
+        <span class="p-desc">Logo design (M + museum column), Glancyr typography, cyan-dominant color palette, design guide.</span>
+      </div>
+      <div class="process-item">
+        <span class="p-num">04</span><span class="p-name">Spatial Design</span>
+        <span class="p-desc">3D gallery modelling in Blender with mannequin height reference. Circular atrium layout, corridor, lighting.</span>
+      </div>
+      <div class="process-item">
+        <span class="p-num">05</span><span class="p-name">UI Design</span>
+        <span class="p-desc">Wireframes progressed low → mid → high fidelity in Figma covering onboarding, home, profiles, and gallery.</span>
+      </div>
+      <div class="process-item">
+        <span class="p-num">06</span><span class="p-name">AR Implementation</span>
+        <span class="p-desc">Figma Bridge import to Unity. AR Foundation scripting, horizontal plane detection, hotspot interactions.</span>
+      </div>
+      <div class="process-item">
+        <span class="p-num">07</span><span class="p-name">Build & Test</span>
+        <span class="p-desc">APK generation via Android Studio. Multiple device testing in open areas. Feedback-driven iteration.</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="s-num reveal">03 <span>———</span> Key Features</p>
+    <h2 class="s-title reveal">What <em>museAR</em><br/>Delivers</h2>
+    <div class="features-layout reveal">
+      <div class="feat">
+        <div class="feat-mark">🏛</div>
+        <p class="feat-t">Virtual 3D Gallery</p>
+        <p class="feat-d">A fully modelled immersive gallery space built in Blender and rendered in Unity, experienced in AR through the phone camera.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-mark">📡</div>
+        <p class="feat-t">AR Foundation + ARCore</p>
+        <p class="feat-d">Precise horizontal plane detection and world-anchored artwork display using Google ARCore XR Plugin for Android.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-mark">🧑‍🎨</div>
+        <p class="feat-t">Student Portfolios</p>
+        <p class="feat-d">Dedicated profile pages per student — artworks, resume, and portfolio unified in one accessible interface.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-mark">🔍</div>
+        <p class="feat-t">Artwork Discovery Feed</p>
+        <p class="feat-d">Home and gallery views enabling exploration of diverse digital artworks from the entire design department.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-mark">🔐</div>
+        <p class="feat-t">Auth System</p>
+        <p class="feat-d">Sign in / Sign up flows with email, password, and Google Login — clean, accessible, and role-aware.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-mark">⚡</div>
+        <p class="feat-t">Invisible Hotspots</p>
+        <p class="feat-d">Interactive trigger areas within the AR space allow navigation while maintaining full immersion — game-like in feel.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="design">
+    <p class="s-num reveal">04 <span>———</span> Design System</p>
+    <h2 class="s-title reveal">Brand &<br/><em>Identity</em></h2>
+    <div class="ds-layout">
+      <div class="reveal">
+        <div class="ds-block">
+          <p class="ds-label">Typography</p>
+          <div class="type-display">Aa</div>
+          <p class="type-note">Glancyr — primary typeface. Associated with liveliness, youth and energy.</p>
+        </div>
+        <div class="ds-block">
+          <p class="ds-label">Colour Palette</p>
+          <div class="palette">
+            <div class="swatch" style="background:#1CCFC1;" data-hex="#1CCFC1"></div>
+            <div class="swatch" style="background:#F2F5FA;" data-hex="#F2F5FA"></div>
+            <div class="swatch" style="background:#D8D9C8;" data-hex="#D8D9C8"></div>
+            <div class="swatch" style="background:#C4D8EA;" data-hex="#C4D8EA"></div>
+            <div class="swatch" style="background:#C4A481;" data-hex="#C4A481"></div>
+            <div class="swatch" style="background:#FF6535;" data-hex="#FF6535"></div>
+            <div class="swatch" style="background:#3E7188;" data-hex="#3E7188"></div>
+            <div class="swatch" style="background:#1a1814;" data-hex="#1A1814"></div>
+          </div>
+          <p style="font-size:0.75rem; color:var(--muted); line-height:1.6; margin-top:2rem;">Cyan as dominant brand color. White, grey, black and orange for contrast and vibrancy.</p>
+        </div>
+        <div class="ds-block">
+          <p class="ds-label">Logo System</p>
+          <div class="logo-formula">
+            <span class="lf-box">M</span>
+            <span class="lf-sym">+</span>
+            <span class="lf-box" style="font-size:1.2rem; padding: 0.5rem 0.6rem;">🏛</span>
+            <span class="lf-sym">=</span>
+            <span class="lf-result">museAR</span>
+          </div>
+          <p style="font-size:0.75rem; color:var(--muted); line-height:1.6; margin-top:0.8rem;">Letter M merged with a museum column icon. Name: <em>muse</em> (Museum) + <em>AR</em> (Augmented Reality).</p>
+        </div>
+      </div>
+      <div class="reveal">
+        <div class="ds-block">
+          <p class="ds-label">Wireframe Progression</p>
+          <div class="fidelity-list">
+            <div class="fid-row"><span class="fid-label">Low Fidelity</span><div class="fid-track"><div class="fid-fill" style="width:28%; opacity:0.4;"></div></div></div>
+            <div class="fid-row"><span class="fid-label">Mid Fidelity</span><div class="fid-track"><div class="fid-fill" style="width:62%;"></div></div></div>
+            <div class="fid-row"><span class="fid-label">High Fidelity</span><div class="fid-track"><div class="fid-fill" style="width:100%;"></div></div></div>
+          </div>
+        </div>
+        <div class="ds-block" style="margin-top:2.5rem;">
+          <p class="ds-label">App Screens</p>
+          <div class="screen-row-item"><span style="font-size:0.82rem;">Onboarding</span><span style="font-size:0.72rem; color:var(--muted);">Splash · brand entry</span></div>
+          <div class="screen-row-item"><span style="font-size:0.82rem;">Sign In / Sign Up</span><span style="font-size:0.72rem; color:var(--muted);">Email · Google auth</span></div>
+          <div class="screen-row-item"><span style="font-size:0.82rem;">Home Feed</span><span style="font-size:0.72rem; color:var(--muted);">Artwork discovery</span></div>
+          <div class="screen-row-item"><span style="font-size:0.82rem;">My Profile</span><span style="font-size:0.72rem; color:var(--muted);">Upload · Portfolio</span></div>
+          <div class="screen-row-item"><span style="font-size:0.82rem;">Student Profile</span><span style="font-size:0.72rem; color:var(--muted);">Resume · Works</span></div>
+          <div class="screen-row-item" style="border-bottom:none;"><span style="font-size:0.82rem;">Inside Gallery (AR)</span><span style="font-size:0.72rem; color:var(--muted);">Camera · 3D space</span></div>
+        </div>
+        <div class="ds-block" style="padding:1.8rem; background:white; border:1px solid var(--line);">
+          <p style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.15em; color:var(--muted); margin-bottom:0.4rem;">Target Audience</p>
+          <p style="font-size:0.88rem; line-height:1.6;">Students, artists, designers and professionals — <strong>age 18–40</strong> — to established art enthusiasts & collectors.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="technical">
+    <p class="s-num reveal">05 <span>———</span> Technical</p>
+    <h2 class="s-title reveal">Under the<br/><em>Hood</em></h2>
+    <div class="tech-layout">
+      <div class="reveal">
+        <div class="tool-list">
+          <div class="tool"><span class="tool-n">Figma + Figma Bridge</span><span class="tool-u">UI Design → Unity import</span></div>
+          <div class="tool"><span class="tool-n">Unity</span><span class="tool-u">3D scene + AR runtime</span></div>
+          <div class="tool"><span class="tool-n">Blender</span><span class="tool-u">Gallery 3D modelling</span></div>
+          <div class="tool"><span class="tool-n">AR Foundation</span><span class="tool-u">Unity AR package</span></div>
+          <div class="tool"><span class="tool-n">Google ARCore XR</span><span class="tool-u">Android AR support</span></div>
+          <div class="tool"><span class="tool-n">Android Studio + JDK</span><span class="tool-u">APK build pipeline</span></div>
+          <div class="tool"><span class="tool-n">VS Code</span><span class="tool-u">Scripting & logic</span></div>
+          <div class="tool"><span class="tool-n">Adobe Photoshop</span><span class="tool-u">Asset & texture work</span></div>
+        </div>
+      </div>
+      <div class="reveal">
+        <div class="pipeline">
+          <div class="pipe-step"><span class="pipe-n">01</span><span class="pipe-t">Design UI in Figma through low, mid, and high fidelity wireframes across all screens.</span></div>
+          <div class="pipe-step"><span class="pipe-n">02</span><span class="pipe-t">Set up UI and 3D scene in Unity via Figma Bridge — merging digital UI with spatial design.</span></div>
+          <div class="pipe-step"><span class="pipe-n">03</span><span class="pipe-t">Script interactions in VS Code & Android Studio — plane detection, hotspots, transitions.</span></div>
+          <div class="pipe-step"><span class="pipe-n">04</span><span class="pipe-t">Generate the Android Application Package (APK) via Android Studio build pipeline.</span></div>
+          <div class="pipe-step"><span class="pipe-n">05</span><span class="pipe-t">Test on multiple Android devices in open areas — iterative feedback and refinement.</span></div>
+          <div class="pipe-step"><span class="pipe-n">06</span><span class="pipe-t">Final polish and application delivery.</span></div>
+        </div>
+        <div style="margin-top:2rem; padding:1.5rem; background:white; border:1px solid var(--line);">
+          <p style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.15em; color:var(--muted); margin-bottom:0.4rem;">Hardware</p>
+          <p style="font-size:0.82rem; color:#5a5752; line-height:1.6;">Development: i5+ · 16GB RAM · 1TB SSD. Testing: high-performing Android device with ample storage.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="s-num reveal">06 <span>———</span> Learning Outcomes</p>
+    <h2 class="s-title reveal">What Was<br/><em>Achieved</em></h2>
+    <div class="outcomes-grid reveal">
+      <div class="outcome"><div class="oc-num">01</div><div class="oc-t">Immersive Technology Mastery</div><div class="oc-d">Deep understanding of AR, VR, MR, and XR — their differences, use cases, and SDK ecosystems for content development.</div></div>
+      <div class="outcome"><div class="oc-num">02</div><div class="oc-t">Technical AR Scripting</div><div class="oc-d">Learned to script for AR, implement horizontal plane detection, import Figma UI into Unity, add interactions, and build production APKs.</div></div>
+      <div class="outcome"><div class="oc-num">03</div><div class="oc-t">UX Research Methods</div><div class="oc-d">Understood how surveys, user personas, pain point analysis, and depth research are essential for creating effective UX design.</div></div>
+      <div class="outcome"><div class="oc-num">04</div><div class="oc-t">3D Production Pipeline</div><div class="oc-d">End-to-end 3D pipeline from Blender modelling to Unity scene setup, asset optimisation, and real-world AR deployment.</div></div>
+    </div>
+  </section>
+
+  <section id="reflection">
+    <p class="s-num reveal">07 <span>———</span> Reflection</p>
+    <h2 class="s-title reveal">Future, Limits<br/>& <em>Conclusion</em></h2>
+    <div class="reflection-layout reveal">
+      <div>
+        <p class="ref-label future">Future Scope</p>
+        <ul class="ref-list">
+          <li>Multiple gallery spaces with varied environments</li>
+          <li>Improved space, texture, and lighting quality</li>
+          <li>More interactive elements and animations</li>
+          <li>iOS, VR headset & Apple Vision Pro builds</li>
+          <li>Invisible buttons for game-like AR navigation</li>
+          <li>Large-scale user data collection and analysis</li>
+        </ul>
+      </div>
+      <div>
+        <p class="ref-label limits">Limitations</p>
+        <ul class="ref-list">
+          <li>Demands a high-performing device with large storage</li>
+          <li>Low light and enclosed spaces reduce AR effectiveness</li>
+          <li>Display visibility issues in direct sunlight</li>
+          <li>Interactions require further optimisation</li>
+        </ul>
+      </div>
+      <div>
+        <p class="ref-label conclude">Conclusion</p>
+        <ul class="ref-list">
+          <li>AR, VR, MR & XR demonstrate clear potential in enhancing art experiences</li>
+          <li>Virtual gallery with AR can be a game changer for the design industry</li>
+          <li>These technologies can revolutionise the traditional gallery visit</li>
+          <li>A high-performing Android device is essential to fully realise AR benefits</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div>
+      <div class="footer-brand">Muse.AR</div>
+      <div class="footer-sub">Augmented Virtual Gallery · Dept. of MCD · 2024</div>
+    </div>
+    <div class="footer-copy">Figma · Unity · Blender · ARCore · Android Studio</div>
+  </footer>
+
+  <script>
+    const els = document.querySelectorAll('.reveal');
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+    els.forEach(el => io.observe(el));
+  </script>
+</body>
+</html>
